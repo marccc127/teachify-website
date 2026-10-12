@@ -422,5 +422,83 @@
 </div>
 <div class="footer-bottom"><nav class="footer-legal" aria-label="Rechtliches"><a href="https://marccc127.github.io/teachify-legal/datenschutz/" target="_blank" rel="noopener noreferrer">Datenschutz</a><a href="https://marccc127.github.io/teachify-legal/impressum/" target="_blank" rel="noopener noreferrer">Impressum</a><a href="https://marccc127.github.io/teachify-legal/support/" target="_blank" rel="noopener noreferrer">Support</a></nav><span class="footer-copyright">© 2026 Teachify</span></div>
 </footer>
+<!-- tf-newsletter-popup -->
+<style>
+.tfp-overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.45);opacity:0;transition:opacity .25s ease}
+.tfp-overlay[hidden]{display:none}
+.tfp-overlay.is-open{opacity:1}
+.tfp-card{position:relative;box-sizing:border-box;width:calc(100% - 32px);max-width:420px;max-height:90vh;overflow-y:auto;overscroll-behavior:contain;padding:32px 24px 24px;border:1px solid #E2D5AB;border-radius:28px;background:var(--honey-soft,#FFF3D1);color:var(--ink,#141210);box-shadow:0 24px 60px rgba(15,23,42,.22);transform:translateY(12px) scale(.98);transition:transform .3s var(--ease,ease)}
+.tfp-overlay.is-open .tfp-card{transform:none}
+.tfp-card:focus{outline:none}
+.tfp-card h2{margin:0 36px 12px 0;font:800 clamp(24px,6vw,30px)/1.1 Outfit,Arial,sans-serif;letter-spacing:-.8px;color:var(--ink,#141210);text-wrap:balance}
+.tfp-card .tfp-lead{margin:0 0 20px;color:var(--copy,#64605A);font-size:15px;line-height:1.7}
+.tfp-close{position:absolute;top:12px;right:12px;display:grid;place-items:center;width:44px;height:44px;margin:0;padding:0;border:0;border-radius:50%;background:transparent;color:var(--ink,#141210);font:400 28px/1 Inter,Arial,sans-serif;cursor:pointer}
+.tfp-close:hover{background:#14121010}
+.tfp-close:focus-visible{outline:3px solid var(--teal,#0F766E);outline-offset:2px}
+.tfp-card .nl-form{gap:14px}
+.tfp-card .nl-form button{justify-self:stretch}
+.tfp-card .nl-hinweis{margin:0;color:#625B4D;font-size:12px;line-height:1.7}
+html.tfp-lock,html.tfp-lock body{overflow:hidden}
+@media(prefers-reduced-motion:reduce){.tfp-overlay,.tfp-card{transition:none}.tfp-card{transform:none}}
+</style>
+<div class="tfp-overlay" id="tf-nl-popup" hidden>
+  <div class="tfp-card" role="dialog" aria-modal="true" aria-labelledby="tfp-title" aria-describedby="tfp-lead" tabindex="-1">
+    <button type="button" class="tfp-close" aria-label="Schließen">×</button>
+    <h2 id="tfp-title">Spar dir Zeit bei der Unterrichtsvorbereitung</h2>
+    <p class="tfp-lead" id="tfp-lead">Praxisnahe Tipps &amp; Vorlagen für Lehrkräfte – einmal pro Woche, jederzeit abbestellbar.</p>
+    <form class="nl-form tfp-form" method="POST" action="https://c1a9d8b0.sibforms.com/serve/MUIFAPRjGdTRcaB9wC0hlEn-qdq4vUZFmiCvq3348qKHHme6TK2OR7fE4HVRVJXLodiHfBLQhw1VHO2NreUWbXKfUCrOP7F8Z2fqGVV-OCoytlbASsPVTdn_N0fIkKLAiS9SqyDcMJsQU9NiKOhz5N9xBCfKPeisMQvLIVV24TOeqvd6eDgdPQnnNb3aL3AMdhEW-v2-KZMRcBwEtg==">
+      <label>Vorname (optional)<input type="text" name="FIRSTNAME" autocomplete="given-name"></label>
+      <label>E-Mail-Adresse<input type="email" name="EMAIL" autocomplete="email" required></label>
+      <div class="nl-hp" aria-hidden="true"><input type="text" name="email_address_check" value="" tabindex="-1" autocomplete="off"></div>
+      <input type="hidden" name="locale" value="de">
+      <input type="hidden" name="html_type" value="simple">
+      <button type="submit">Anmelden</button>
+      <p class="nl-hinweis">Mit „Anmelden“ willigst du ein, dass wir dir den Newsletter per E-Mail schicken. Du bekommst zuerst eine Mail zur Bestätigung. Abmelden kannst du dich jederzeit über den Link in jeder Ausgabe. Mehr dazu in der <a href="https://marccc127.github.io/teachify-legal/datenschutz/" target="_blank" rel="noopener noreferrer">Datenschutzerklärung</a>.</p>
+    </form>
+  </div>
+</div>
+<script>
+(function(){
+  var SEEN='tf_nl_popup_seen',SUB='tf_nl_submitted';
+  function get(k){try{return localStorage.getItem(k)}catch(e){return null}}
+  function set(k){try{localStorage.setItem(k,'1')}catch(e){}}
+  var forms=document.querySelectorAll('form.nl-form');
+  for(var i=0;i<forms.length;i++){forms[i].addEventListener('submit',function(){set(SUB);set(SEEN)})}
+  var ov=document.getElementById('tf-nl-popup');
+  if(!ov||get(SEEN)==='1'||get(SUB)==='1')return;
+  var card=ov.querySelector('[role="dialog"]'),closeBtn=ov.querySelector('.tfp-close'),lastFocus=null,timer=null,done=false;
+  function focusables(){return Array.prototype.filter.call(card.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]):not([type="hidden"]):not([tabindex="-1"]),select,textarea,[tabindex]:not([tabindex="-1"])'),function(el){return el.offsetParent!==null||el===document.activeElement})}
+  function onKey(e){
+    if(e.key==='Escape'||e.key==='Esc'){e.preventDefault();close();return}
+    if(e.key==='Tab'){var f=focusables();if(!f.length){e.preventDefault();card.focus();return}
+      var first=f[0],last=f[f.length-1];
+      if(e.shiftKey&&(document.activeElement===first||!card.contains(document.activeElement))){e.preventDefault();last.focus()}
+      else if(!e.shiftKey&&(document.activeElement===last||!card.contains(document.activeElement))){e.preventDefault();first.focus()}}
+  }
+  function onFocusIn(e){if(!card.contains(e.target)){var f=focusables();(f[0]||card).focus()}}
+  function show(){
+    if(done)return;done=true;cleanup();
+    if(get(SEEN)==='1'||get(SUB)==='1')return;
+    set(SEEN);lastFocus=document.activeElement;
+    ov.hidden=false;document.documentElement.classList.add('tfp-lock');
+    void ov.offsetWidth;ov.classList.add('is-open');
+    card.focus();
+    document.addEventListener('keydown',onKey,true);document.addEventListener('focusin',onFocusIn);
+  }
+  function close(){
+    ov.classList.remove('is-open');ov.hidden=true;document.documentElement.classList.remove('tfp-lock');
+    document.removeEventListener('keydown',onKey,true);document.removeEventListener('focusin',onFocusIn);
+    if(lastFocus&&lastFocus.focus&&document.contains(lastFocus)){try{lastFocus.focus()}catch(e){}}
+  }
+  closeBtn.addEventListener('click',close);
+  ov.addEventListener('click',function(e){if(e.target===ov)close()});
+  ov.querySelector('.tfp-form').addEventListener('submit',function(){setTimeout(close,0)});
+  function onScroll(){var d=document.documentElement,max=d.scrollHeight-window.innerHeight;if(max>0&&(window.pageYOffset||d.scrollTop)/max>=0.5)show()}
+  function cleanup(){window.removeEventListener('scroll',onScroll);if(timer)clearTimeout(timer)}
+  window.addEventListener('scroll',onScroll,{passive:true});
+  timer=setTimeout(show,30000);
+})();
+</script>
+<!-- /tf-newsletter-popup -->
 </body>
 </html>
