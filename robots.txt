@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://teachify-studio.de/sitemap.xml
