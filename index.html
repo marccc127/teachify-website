@@ -1038,6 +1038,31 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 .tfp-card .nl-hinweis{margin:0;color:#625B4D;font-size:12px;line-height:1.7}
 html.tfp-lock,html.tfp-lock body{overflow:hidden}
 @media(prefers-reduced-motion:reduce){.tfp-overlay,.tfp-card{transition:none}.tfp-card{transform:none}}
+
+.tfm{position:relative}
+.tfm.is-morphing{overflow:hidden;transition:height .45s var(--ease,ease)}
+.tfm .nl-form{transition:opacity .22s ease,transform .22s ease}
+.tfm .nl-form.is-leaving{opacity:0;transform:scale(.97)}
+.nl-form button[aria-busy="true"]{pointer-events:none;opacity:.85}
+.tfn-spin{width:18px;height:18px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:tfn-spin .7s linear infinite}
+@keyframes tfn-spin{to{transform:rotate(360deg)}}
+.tfn-error{margin:0;padding:10px 14px;border:1px solid #E7A39C;border-radius:12px;background:var(--coral-soft,#FDE7E5);color:#8A2F28;font-size:13px;line-height:1.6}
+.tfc{display:grid;justify-items:start;gap:12px;opacity:0;transform:translateY(8px) scale(.98);transition:opacity .35s ease,transform .45s var(--ease,ease)}
+.tfc.is-in{opacity:1;transform:none}
+.tfc-check{width:56px;height:56px;color:var(--teal,#0F766E)}
+.tfc-check circle{fill:var(--teal-soft,#E0F2F0);stroke:currentColor;stroke-width:2;stroke-dasharray:151;stroke-dashoffset:151}
+.tfc-check path{fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:36;stroke-dashoffset:36}
+.tfc.is-in .tfc-check circle{animation:tfc-draw .6s .1s var(--ease,ease) forwards}
+.tfc.is-in .tfc-check path{animation:tfc-draw .4s .55s var(--ease,ease) forwards}
+@keyframes tfc-draw{to{stroke-dashoffset:0}}
+.tfc h3{margin:4px 0 0;font:800 26px/1.15 Outfit,Arial,sans-serif;letter-spacing:-.6px;color:var(--ink,#141210);outline:none}
+.tfc p{margin:0;color:var(--copy,#64605A);font-size:15px;line-height:1.7}
+.tfc-timer{width:100%;margin-top:8px}
+.tfc-timer small{display:block;margin-bottom:6px;color:#625B4D;font-size:12px}
+.tfc-bar{height:4px;border-radius:4px;background:#E9DDB6;overflow:hidden}
+.tfc-bar span{display:block;height:100%;width:100%;background:var(--teal,#0F766E);transform-origin:left;transition:transform 4s linear}
+.tfn-sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+@media(prefers-reduced-motion:reduce){.tfm.is-morphing,.tfm .nl-form,.tfc{transition:none}.tfc{transform:none}.tfc-check circle,.tfc-check path{animation:none!important;stroke-dashoffset:0}.tfn-spin{animation-duration:1.5s}.tfc-bar span{transition:none}}
 </style>
 <div class="tfp-overlay" id="tf-nl-popup" hidden>
   <div class="tfp-card" role="dialog" aria-modal="true" aria-labelledby="tfp-title" aria-describedby="tfp-lead" tabindex="-1">
@@ -1061,7 +1086,7 @@ html.tfp-lock,html.tfp-lock body{overflow:hidden}
   function get(k){try{return localStorage.getItem(k)}catch(e){return null}}
   function set(k){try{localStorage.setItem(k,'1')}catch(e){}}
   var forms=document.querySelectorAll('form.nl-form');
-  for(var i=0;i<forms.length;i++){forms[i].addEventListener('submit',function(){set(SUB);set(SEEN)})}
+  
   var ov=document.getElementById('tf-nl-popup');
   if(!ov||get(SEEN)==='1'||get(SUB)==='1')return;
   var card=ov.querySelector('[role="dialog"]'),closeBtn=ov.querySelector('.tfp-close'),lastFocus=null,timer=null,done=false;
@@ -1084,17 +1109,79 @@ html.tfp-lock,html.tfp-lock body{overflow:hidden}
     document.addEventListener('keydown',onKey,true);document.addEventListener('focusin',onFocusIn);
   }
   function close(){
-    ov.classList.remove('is-open');ov.hidden=true;document.documentElement.classList.remove('tfp-lock');
+    if(ov.hidden)return;ov.classList.remove('is-open');if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches){ov.hidden=true}else{setTimeout(function(){ov.hidden=true},260)}document.documentElement.classList.remove('tfp-lock');
     document.removeEventListener('keydown',onKey,true);document.removeEventListener('focusin',onFocusIn);
     if(lastFocus&&lastFocus.focus&&document.contains(lastFocus)){try{lastFocus.focus()}catch(e){}}
   }
   closeBtn.addEventListener('click',close);
   ov.addEventListener('click',function(e){if(e.target===ov)close()});
-  ov.querySelector('.tfp-form').addEventListener('submit',function(){setTimeout(close,0)});
+  window.tfNlPopupClose=close;
   function onScroll(){var d=document.documentElement,max=d.scrollHeight-window.innerHeight;if(max>0&&(window.pageYOffset||d.scrollTop)/max>=0.5)show()}
   function cleanup(){window.removeEventListener('scroll',onScroll);if(timer)clearTimeout(timer)}
   window.addEventListener('scroll',onScroll,{passive:true});
   timer=setTimeout(show,30000);
+})();
+</script>
+<script>
+(function(){
+  var RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function set(k){try{localStorage.setItem(k,'1')}catch(e){}}
+  var live=document.createElement('div');live.className='tfn-sr';live.setAttribute('aria-live','polite');live.setAttribute('role','status');document.body.appendChild(live);
+  function showError(form,msg){var e=form.querySelector('.tfn-error');if(!e){e=document.createElement('p');e.className='tfn-error';e.setAttribute('role','alert');var b=form.querySelector('button[type="submit"]');form.insertBefore(e,b)}e.textContent=msg}
+  function clearError(form){var e=form.querySelector('.tfn-error');if(e)e.parentNode.removeChild(e)}
+  function busy(btn,on){if(on){btn._html=btn.innerHTML;btn.setAttribute('aria-busy','true');btn.disabled=true;btn.innerHTML='<span class="tfn-spin" aria-hidden="true"></span> Wird gesendet…'}else{btn.removeAttribute('aria-busy');btn.disabled=false;if(btn._html)btn.innerHTML=btn._html}}
+  function morph(form){
+    var inPopup=!!form.closest('#tf-nl-popup');
+    var wrap=document.createElement('div');wrap.className='tfm';form.parentNode.insertBefore(wrap,form);wrap.appendChild(form);
+    var conf=document.createElement('div');conf.className='tfc';
+    conf.innerHTML='<svg class="tfc-check" viewBox="0 0 52 52" aria-hidden="true" focusable="false"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg>'+
+      '<h3 tabindex="-1">Fast geschafft!</h3><p>Bitte bestätige deine Anmeldung über den Link in der E-Mail, die wir dir gerade geschickt haben.</p>'+
+      (inPopup?'<div class="tfc-timer"><small>Dieses Fenster schließt sich in <b>4</b> Sekunden.</small><div class="tfc-bar"><span></span></div></div>':'');
+    live.textContent='Fast geschafft! Bitte bestätige deine Anmeldung über den Link in der E-Mail.';
+    function finish(){
+      conf.querySelector('h3').focus({preventScroll:inPopup?false:true});
+      if(inPopup)startCountdown(conf);
+    }
+    if(RM){form.hidden=true;wrap.appendChild(conf);conf.classList.add('is-in');finish();return}
+    var h0=wrap.offsetHeight;wrap.style.height=h0+'px';wrap.classList.add('is-morphing');
+    form.classList.add('is-leaving');
+    setTimeout(function(){
+      form.hidden=true;wrap.appendChild(conf);
+      var h1=conf.offsetHeight;
+      requestAnimationFrame(function(){wrap.style.height=h1+'px';conf.classList.add('is-in')});
+      setTimeout(function(){wrap.style.height='';wrap.classList.remove('is-morphing')},500);
+      finish();
+    },230);
+  }
+  function startCountdown(conf){
+    var bar=conf.querySelector('.tfc-bar span'),num=conf.querySelector('.tfc-timer b'),n=4;
+    requestAnimationFrame(function(){requestAnimationFrame(function(){bar.style.transform='scaleX(0)'})});
+    var iv=setInterval(function(){n--;if(num)num.textContent=String(Math.max(n,0));if(n<=0){clearInterval(iv);if(window.tfNlPopupClose)window.tfNlPopupClose()}},1000);
+  }
+  function handle(e){
+    var form=e.currentTarget;e.preventDefault();
+    if(form._sending)return;
+    clearError(form);
+    var em=form.querySelector('input[name="EMAIL"]'),v=(em.value||'').trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)){showError(form,'Bitte gib eine gültige E-Mail-Adresse ein.');em.setAttribute('aria-invalid','true');em.focus();return}
+    em.removeAttribute('aria-invalid');
+    var hp=form.querySelector('input[name="email_address_check"]');
+    if(hp&&hp.value){set('tf_nl_submitted');set('tf_nl_popup_seen');morph(form);return}
+    var btn=form.querySelector('button[type="submit"]');form._sending=true;busy(btn,true);
+    var fd=new FormData(form);fd.set('EMAIL',v);
+    fetch(form.action,{method:'POST',body:fd,mode:'cors',credentials:'omit',headers:{'Accept':'application/json'}})
+      .then(function(r){return r.text().then(function(t){var j=null;try{j=JSON.parse(t)}catch(x){}return {ok:r.ok,j:j}})})
+      .then(function(res){
+        form._sending=false;busy(btn,false);
+        if(res.j&&res.j.success===true){set('tf_nl_submitted');set('tf_nl_popup_seen');morph(form);return}
+        var msg=res.j&&(res.j.message||(res.j.errors&&(res.j.errors.EMAIL||res.j.errors.message||Object.values(res.j.errors)[0])));
+        if(typeof msg!=='string')msg=null;
+        showError(form,msg||'Die Anmeldung hat leider nicht geklappt. Bitte prüfe deine E-Mail-Adresse und versuche es noch einmal.');
+      })
+      .catch(function(){form._sending=false;busy(btn,false);showError(form,'Gerade gibt es keine Verbindung. Bitte prüfe dein Internet und versuche es gleich noch einmal.')});
+  }
+  var forms=document.querySelectorAll('form.nl-form');
+  for(var i=0;i<forms.length;i++){forms[i].setAttribute('novalidate','');forms[i].addEventListener('submit',handle)}
 })();
 </script>
 <!-- /tf-newsletter-popup -->
